@@ -3,10 +3,13 @@
     <div class="weather-box">
         <div class="top-wrapper" :class="{'view-day': forecastTimeDay === true, 'view-night': forecastTimeDay === false}">
           <div class="top-wrapper-search">
+            <div class="forecast-hour">
+              <div class="hour-select-img" title="Select forecast time"></div>
+            </div>
             <div class="search-mode-box">
               <div class="search">
-                <input type="text" name="searchFor" class="search-input" :model="searchFor" placeholder="Type City Name">
-                <input type="button" class="search-btn">
+                <input type="text" name="searchFor" class="search-input" v-model="searchFor" placeholder="Type City Name">
+                <input type="button" class="search-btn" @click="loadJson()">
               </div>
               <div class="mode-box">
                 <div class="mode-bg" :class="{'active-mode': viewMode === 'standart', 'inactive-mode': viewMode === 'trip'}">
@@ -35,6 +38,14 @@
               ></div>
             </div>
           </div>
+          <div class="forecast-info">
+            <div class="forecast-city">
+              <h4>{{ cityForecast.city }}, {{ cityForecast.country }}</h4>
+            </div>
+            <div class="forecast-day">
+              <h4>{{ viewDayInfo }}, 12 <sup>th</sup> Month</h4>
+            </div>
+          </div>
         </div>
         <div class="bottom-wrapper">
           <div v-if="forecastTimeDay === true && viewMode === 'standart'" class="weather-info" v-for="(index, day) in daysInfo" 
@@ -42,15 +53,16 @@
                 :key="day" 
                 @click="displayDayInfo"
                 :class="{'active-info': viewDayInfo === index.day}"
+                :id="day"
           >
-            <div class="day-title" :data-day="index.day">
-              <h3 :data-day="index.day">{{ index.day }}</h3>
+            <div class="day-title" :data-day="index.day" :id="day">
+              <h3 :data-day="index.day" :id="day">{{ index.day }}</h3>
             </div>
-            <div class="day-icon" :data-day="index.day">
-              <div :class="index.icon" :data-day="index.day"></div>
+            <div class="day-icon" :data-day="index.day" :id="day">
+              <div :class="index.icon" :data-day="index.day" :id="day"></div>
             </div>
-            <div class="day-temp" :data-day="index.day">
-              <h3 :data-day="index.day">{{ index.temp }}<sup>&#9675;</sup></h3>
+            <div class="day-temp" :data-day="index.day" :id="day">
+              <h3 :data-day="index.day" :id="day">{{ index.temp }}<sup>&#9675;</sup></h3>
             </div>
           </div>
 
@@ -59,15 +71,16 @@
                 :key="day" 
                 @click="displayDayInfo"
                 :class="{'active-info': viewDayInfo === index.day}"
+                :id="day"
           >
-            <div class="day-title" :data-day="index.day">
-              <h3 :data-day="index.day">{{ index.day }}</h3>
+            <div class="day-title" :data-day="index.day" :id="day">
+              <h3 :data-day="index.day" :id="day">{{ index.day }}</h3>
             </div>
-            <div class="day-icon" :data-day="index.day">
-              <div :class="index.icon" :data-day="index.day"></div>
+            <div class="day-icon" :data-day="index.day" :id="day">
+              <div :class="index.icon" :data-day="index.day" :id="day"></div>
             </div>
-            <div class="day-temp" :data-day="index.day">
-              <h3 :data-day="index.day">{{ index.temp }}<sup>&#9675;</sup></h3>
+            <div class="day-temp" :data-day="index.day" :id="day">
+              <h3 :data-day="index.day" :id="day">{{ index.temp }}<sup>&#9675;</sup></h3>
             </div>
           </div>
         </div>
@@ -79,28 +92,36 @@
 export default {
   data(){
     return {
-      forecastTimeDay: true,
+      forecastTimeDay: null,
       searchFor: '',
       viewMode: 'standart',
       viewTemp: 'celsius',
       daysInfo: [
-        {day: "Mon", temp: "21", icon: "sunny"},
-        {day: "Tue", temp: "19", icon: "sunny"},
-        {day: "Wed", temp: "25", icon: "sunny-cloud"},
-        {day: "Thu", temp: "27", icon: "sunny"},
-        {day: "Fri", temp: "23", icon: "sunny-cloud"},
-        {day: "Sat", temp: "21.5", icon: "sunny"}
+        {day: "Monday", temp: "21", icon: "sunny"},
+        {day: "Tuesday", temp: "19", icon: "sunny"},
+        {day: "Wednesday", temp: "25", icon: "sunny-cloud"},
+        {day: "Thursday", temp: "27", icon: "sunny"},
+        {day: "Friday", temp: "23", icon: "sunny-cloud"}
       ],
       nightsInfo: [
-        {day: "Mon", temp: "10", icon: "rain"},
-        {day: "Tue", temp: "13", icon: "rain"},
-        {day: "Wed", temp: "16", icon: "cloud-night"},
-        {day: "Thu", temp: "15.5", icon: "storm"},
-        {day: "Fri", temp: "11", icon: "snowing"},
-        {day: "Sat", temp: "11.5", icon: "cloud-night"}
+        {day: "Monday", temp: "10", icon: "rain"},
+        {day: "Tuesday", temp: "13", icon: "rain"},
+        {day: "Wednesday", temp: "16", icon: "cloud-night"},
+        {day: "Thursday", temp: "15.5", icon: "storm"},
+        {day: "Friday", temp: "11", icon: "snowing"}
       ],
-      viewDayInfo: '',
+      daysDisplay: [],
+      viewDayInfo: "",
+      daySelected: 0,
+      weatherLocation: {latitude: null, longitude: null},
+      cityForecast: {country: "", city: ""},
     }
+  },
+  created: function(){
+    this.lookupTime();
+    this.lookupDay();
+    this.getDayDisplay();
+    this.getLocation();
   },
   methods: {
     changeForecastTime(){
@@ -114,6 +135,63 @@ export default {
     },
     displayDayInfo(event){
       this.viewDayInfo = event.target.dataset.day;
+      this.daySelected = event.target.id;
+    },
+    lookupTime(){
+      let currentTime = new Date();
+      let currentHour = currentTime.getHours();
+      (currentHour >= 6 && currentHour < 20) ? this.forecastTimeDay = true : this.forecastTimeDay = false;
+    },
+    lookupDay(){
+      this.viewDayInfo = this.daysInfo[0].day;
+    },
+    getDayDisplay(){
+      for(let i = 0; i < this.daysInfo.length; i++){
+        this.daysDisplay.push(this.daysInfo[i].day.split("").splice(0, 3).join(""));
+      }
+    },
+    getLocation() {
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(position => {
+          this.weatherLocation.latitude = position.coords.latitude;
+          this.weatherLocation.longitude = position.coords.longitude;
+          this.loadJson();
+        });
+      } else {
+        console.log("Geolocation is not supported");
+      }
+    },
+    convertToCelsius(kelvin){
+      let celsius = 0;
+      celsius = kelvin - 273.15;
+      console.log(Math.ceil(celsius));
+    },
+    convertToFahren(kelvin){
+      let fahren = 0;
+      fahren = kelvin * 9/5 - 459.67;
+      console.log(Math.ceil(fahren));
+    },
+    saveWeatherInfo(obj){
+      let daysInfoArr = [];
+      let nightsInfoArr = [];
+    },
+    loadJson(){
+      let getApi = "";
+      let obj;
+      const searchLocation = `https://api.openweathermap.org/data/2.5/forecast?q=${this.searchFor}&APPID=9547e3e67a04019bbfd370d8e64047bb`;
+      const autoLocation = `https://api.openweathermap.org/data/2.5/forecast?lat=${this.weatherLocation.latitude}&lon=${this.weatherLocation.longitude}&APPID=9547e3e67a04019bbfd370d8e64047bb`;
+      
+      (this.searchFor.length !== 0) ? getApi = searchLocation : getApi = autoLocation;
+      
+      fetch(getApi)
+        .then(res => res.json())
+          .then(data => obj = data)
+            .then(() => {
+              this.cityForecast.country = obj.city.country;
+              this.cityForecast.city = obj.city.name;
+              console.log(obj)
+              // this.saveWeatherInfo(obj);
+            })
     }
   }
 }
@@ -171,6 +249,31 @@ export default {
   display: grid;
   grid-template-columns: 50px 1fr 50px;
   grid-template-rows: 50px;
+}
+
+.forecast-info {
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+
+/* forecast hour styling */
+.forecast-hour {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.hour-select-img {
+  width: 35px;
+  height: 35px;
+  background: url(./assets/forecast-time-images/select-time.png) no-repeat center;
+  background-size: cover;
+  cursor: pointer;
 }
 
 /* search, mode, temp BOX */
@@ -308,6 +411,28 @@ export default {
   transform: rotate(0deg);
   transition: transform 250ms;
 }
+
+/* forecast time styling */
+.forecast-day,
+.forecast-city {
+  margin-top: 5px;
+  display: flex;
+  align-self: center;
+}
+
+.forecast-day > h4,
+.forecast-city > h4 {
+  text-align: center;
+  color: #fff;
+  margin: 0;
+}
+
+/* .forecast-icon {
+  margin-right: 25px;
+  width: 80px;
+  height: 80px;
+} */
+
 /* background view (day and night) images */
 .view-day {
   background: url(./assets/view-background/background-day.png) no-repeat center;
@@ -322,7 +447,7 @@ export default {
 /*------------------------------------------*/
 /* inside .bottom-wrapper */
 .weather-info {
-  max-width: 150px;
+  max-width: 180px;
   min-width: 80px;
   width: 100%;
   height: 100%;
@@ -389,10 +514,13 @@ h3 {
 }
 
 /* Query media */
-@media (max-width: 600px){
-  .top-wrapper-search {
-    grid-template-columns: auto 1fr 50px;
+@media (max-height: 725px){
+  .app {
+    height: 725px;
   }
+}
+
+@media (max-width: 600px){
   .day-icon > div {
     width: 50px;
     height: 50px;
