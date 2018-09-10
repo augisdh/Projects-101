@@ -110,6 +110,22 @@ export default {
         {day: "Thursday", temp: "15.5", icon: "storm"},
         {day: "Friday", temp: "11", icon: "snowing"}
       ],
+      weatherInfoDay: [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
+      weatherInfoNight: [
+        [],
+        [],
+        [],
+        [],
+        [],
+        []
+      ],
       daysDisplay: [],
       viewDayInfo: "",
       daySelected: 0,
@@ -136,11 +152,13 @@ export default {
     displayDayInfo(event){
       this.viewDayInfo = event.target.dataset.day;
       this.daySelected = event.target.id;
+      console.log(this.weatherInfoDay);
+      console.log(this.weatherInfoNight);
     },
     lookupTime(){
       let currentTime = new Date();
       let currentHour = currentTime.getHours();
-      (currentHour >= 6 && currentHour < 20) ? this.forecastTimeDay = true : this.forecastTimeDay = false;
+      (currentHour >= 6 && currentHour < 18) ? this.forecastTimeDay = true : this.forecastTimeDay = false;
     },
     lookupDay(){
       this.viewDayInfo = this.daysInfo[0].day;
@@ -171,9 +189,139 @@ export default {
       fahren = kelvin * 9/5 - 459.67;
       console.log(Math.ceil(fahren));
     },
+    removeAndSaveWeekDays(weekDaysArray){
+      const weekDays = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      let currentDate = new Date();
+      let currentWeekDay = currentDate.getDay();
+      let increase = -1;
+
+      for(let i = 0; i < this.weatherInfoDay.length; i++){
+        if(currentWeekDay + i < 7){
+          this.weatherInfoDay[i].splice(0, this.weatherInfoDay.length, weekDays[currentWeekDay + i]);
+          this.weatherInfoNight[i].splice(0, this.weatherInfoNight.length, weekDays[currentWeekDay + i]);      
+        } else if (currentWeekDay + i >= 7){
+          increase += 1;
+          this.weatherInfoDay[i].splice(0, this.weatherInfoDay.length, weekDays[increase]);
+          this.weatherInfoNight[i].splice(0, this.weatherInfoNight.length, weekDays[increase]); 
+        }
+      }
+    },
     saveWeatherInfo(obj){
-      let daysInfoArr = [];
-      let nightsInfoArr = [];
+      let months = [];
+      let days = [];
+
+      (months.length > 0) ? months.splice(0, months.length) : months;
+      (days.length > 0) ? days.splice(0, days.length) : days;
+
+      let currentDate = new Date();
+      let currentYear = currentDate.getFullYear().toString();
+      let currentMonth = currentDate.getMonth() + 1;
+      let currentDay = currentDate.getDate();
+
+      // Next 5 days DATE set //
+      let secondDate = new Date(currentDate);
+      let thirdDate = new Date(currentDate);
+      let fourthDate = new Date(currentDate);
+      let fifthDate = new Date(currentDate);
+      let sixthDate = new Date(currentDate);
+
+      secondDate.setDate(currentDate.getDate() + 1);
+      thirdDate.setDate(currentDate.getDate() + 2);
+      fourthDate.setDate(currentDate.getDate() + 3);
+      fifthDate.setDate(currentDate.getDate() + 4);
+      sixthDate.setDate(currentDate.getDate() + 5);
+
+      let secondYear = secondDate.getFullYear().toString();
+      let thirdYear = thirdDate.getFullYear().toString();
+      let fourthYear = fourthDate.getFullYear().toString();
+      let fifthYear = fifthDate.getFullYear().toString();
+      let sixthYear = sixthDate.getFullYear().toString();
+
+      let secondMonth = secondDate.getMonth() + 1;
+      let thirdMonth = thirdDate.getMonth() + 1;
+      let fourthMonth = fourthDate.getMonth() + 1;
+      let fifthMonth = fifthDate.getMonth() + 1;
+      let sixthMonth = sixthDate.getMonth() + 1;
+
+      months.push(currentMonth, secondMonth, thirdMonth, fourthMonth, fifthMonth, sixthMonth);
+
+      let secondDay = secondDate.getDate();
+      let thirdDay = thirdDate.getDate();
+      let fourthDay = fourthDate.getDate();
+      let fifthDay = fifthDate.getDate();
+      let sixthDay = sixthDate.getDate();
+
+      days.push(currentDay, secondDay, thirdDay, fourthDay, fifthDay, sixthDay);
+      // End of next 5 days Date set //
+
+      for(let month in months){
+        (months[month] >= 1 && months[month] <= 9) ? months[month] = "0" + months[month] : months[month];
+      }
+
+      for(let day in days){
+        (days[day] >= 1 && days[day] <= 9) ? days[day] = "0" + days[day] : days[day];
+      }
+
+      currentMonth = months[0].toString();
+      secondMonth = months[1].toString();
+      thirdMonth = months[2].toString();
+      fourthMonth = months[3].toString();
+      fifthMonth = months[4].toString();
+      sixthMonth = months[5].toString();
+
+      let todayDateCheck = currentYear + "-" + currentMonth + "-" + days[0];
+      let secondDateCheck = secondYear + "-" + secondMonth + "-" + days[1];
+      let thirdDateCheck = thirdYear + "-" + thirdMonth + "-" + days[2];
+      let fourthDateCheck = fourthYear + "-" + fourthMonth + "-" + days[3];
+      let fifthDateCheck = fifthYear + "-" + fifthMonth + "-" + days[4];
+      let sixthDateCheck = sixthYear + "-" + sixthMonth + "-" + days[5];
+
+      let objListLength = obj.list.length;
+
+      this.removeAndSaveWeekDays();
+
+      for(let i = 0; i < objListLength; i++){
+        let objListDate = [...obj.list[i].dt_txt].splice(0,10).join("");
+        let objListTime = [...obj.list[i].dt_txt].splice(11,8).join("");
+
+        if(objListDate === todayDateCheck){ // current Day
+          if(objListTime >= "18:00:00" || objListTime < "06:00:00"){
+            this.weatherInfoNight[0].push(obj.list[i]);
+          } else {
+            this.weatherInfoDay[0].push(obj.list[i]);
+          }
+        } else if(objListDate === secondDateCheck){ // second Day
+          if(objListTime >= "18:00:00" || objListTime < "06:00:00"){
+            this.weatherInfoNight[1].push(obj.list[i]);
+          } else {
+            this.weatherInfoDay[1].push(obj.list[i]);
+          }
+        } else if(objListDate === thirdDateCheck){ // third Day
+          if(objListTime >= "18:00:00" || objListTime < "06:00:00"){
+            this.weatherInfoNight[2].push(obj.list[i]);
+          } else {
+            this.weatherInfoDay[2].push(obj.list[i]);
+          }
+        } else if(objListDate === fourthDateCheck){ // fourth Day
+          if(objListTime >= "18:00:00" || objListTime < "06:00:00"){
+            this.weatherInfoNight[3].push(obj.list[i]);
+          } else {
+            this.weatherInfoDay[3].push(obj.list[i]);
+          }
+        } else if(objListDate === fifthDateCheck){ // fifth Day
+          if(objListTime >= "18:00:00" || objListTime < "06:00:00"){
+            this.weatherInfoNight[4].push(obj.list[i]);
+          } else {
+            this.weatherInfoDay[4].push(obj.list[i]);
+          }
+        } else if(objListDate === sixthDateCheck){ // sixth Day
+          if(objListTime >= "18:00:00" || objListTime < "06:00:00"){
+            this.weatherInfoNight[5].push(obj.list[i]);
+          } else {
+            this.weatherInfoDay[5].push(obj.list[i]);
+          }
+        }
+      }
     },
     loadJson(){
       let getApi = "";
@@ -190,7 +338,7 @@ export default {
               this.cityForecast.country = obj.city.country;
               this.cityForecast.city = obj.city.name;
               console.log(obj)
-              // this.saveWeatherInfo(obj);
+              this.saveWeatherInfo(obj);
             })
     }
   }
@@ -210,14 +358,9 @@ export default {
   align-items: center;
 }
 
-.weather-day {
-  background: linear-gradient(#2b69a2, #13a1a0);
-}
-.weather-night {
-  background: linear-gradient(#00223e, #1e5b70);
-}
+.weather-day {background: linear-gradient(#2b69a2, #13a1a0);}
+.weather-night {background: linear-gradient(#00223e, #1e5b70);}
 
-/*  */
 .weather-box {
   max-width: 900px;
   width: 100%;
@@ -285,9 +428,7 @@ export default {
   justify-content: center;
   align-items: center;
 }
-  .search-mode-box > div {
-    margin: 0 5px;
-  }
+  .search-mode-box > div {margin: 0 5px;}
 
 .search {
   max-width: 215px;
@@ -305,9 +446,7 @@ export default {
   padding-left: 10px;
   outline: none;
 }
-  .search-input:focus {
-    border: 1px solid #00223e;
-  }
+  .search-input:focus {border: 1px solid #00223e;}
 
 .search-btn {
   width: 35px;
@@ -320,9 +459,7 @@ export default {
   outline: none;
   transition: background-size 100ms;
 }
-  .search-btn:active {
-    background-size: 65%;
-  }
+  .search-btn:active {background-size: 65%;}
 
 .mode-box,
 .temp-box {
@@ -460,9 +597,7 @@ export default {
     background-color: #fff;
     box-shadow: 0 0 15px rgba(255, 50, 0, 0.3);
   }
-  .weather-info:hover h3 {
-    color: rgb(255, 50, 0);
-  }
+  .weather-info:hover h3 {color: rgb(255, 50, 0);}
 
 .day-title,
 .day-icon,
@@ -515,9 +650,7 @@ h3 {
 
 /* Query media */
 @media (max-height: 725px){
-  .app {
-    height: 725px;
-  }
+  .app {height: 725px;}
 }
 
 @media (max-width: 600px){
@@ -525,8 +658,6 @@ h3 {
     width: 50px;
     height: 50px;
   }
-  h3 {
-    font-size: 1em;
-  }
+  h3 {font-size: 1em;}
 }
 </style>
