@@ -41,20 +41,18 @@
               <div class="temp-box">
                 <input type="button" value="F" class="temp-f" data-temp="fahren"
                         :class="{'active-temp': viewTemp === 'fahren', 'inactive-temp': viewTemp === 'celsius'}"
-                        @click="changeViewTemp"
-                >
+                        @click="changeViewTemp">
                 <input type="button" value="C" class="temp-c" data-temp="celsius"
                         :class="{'active-temp': viewTemp === 'celsius', 'inactive-temp': viewTemp === 'fahren'}"
-                        @click="changeViewTemp"
-                >
+                        @click="changeViewTemp">
               </div>
             </div>
             <div class="forecast-time">
               <div class="forecast-box" 
                     @click="changeForecastTime" 
                     :class="{'day-time': forecastTimeDay === false, 'night-time': forecastTimeDay === true}"
-                    title="Forecast Time"
-              ></div>
+                    title="Forecast Time">
+              </div>
             </div>
           </div>
           <div class="forecast-info">
@@ -92,8 +90,7 @@
                 :key="day" 
                 @click="displayDayInfo"
                 :class="{'active-info': viewDayDate === index[0]}"
-                :id="day"
-          >
+                :id="day">
             <div class="day-title" :data-day="index[0]" :id="day">
               <h3 :data-day="index[0]" :id="day">{{ index[0] }}</h3>
             </div>
@@ -118,8 +115,7 @@
                 :key="day" 
                 @click="displayDayInfo"
                 :class="{'active-info': viewDayDate === index[0]}"
-                :id="day"
-          >
+                :id="day">
             <div class="day-title" :data-day="index[0]" :id="day">
               <h3 :data-day="index[0]" :id="day">{{ index[0] }}</h3>
             </div>
