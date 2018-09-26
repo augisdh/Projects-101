@@ -4,7 +4,26 @@
         <div class="top-wrapper" :class="{'view-day': forecastTimeDay === true, 'view-night': forecastTimeDay === false}">
           <div class="top-wrapper-search">
             <div class="forecast-hour">
-              <div class="hour-select-img" title="Select forecast time"></div>
+              <div class="hour-select-img" 
+                  title="Select forecast time"
+                  @click="showTime = !showTime">
+                <ul :class="{'active-time': showTime === true}">
+                  <li v-if="forecastTimeDay === true" 
+                      v-for="(index, time) in weatherTimeDay" 
+                      :key="time"
+                      :id="time"
+                      @click="changeTimeSelected">
+                    {{ index }}
+                  </li>
+                  <li v-if="forecastTimeDay === false" 
+                      v-for="(index, time) in weatherTimeNight" 
+                      :key="time"
+                      :id="time"
+                      @click="changeTimeSelected">
+                    {{ index }}
+                  </li>                  
+                </ul>
+              </div>
             </div>
             <div class="search-mode-box">
               <div class="search">
@@ -43,44 +62,80 @@
               <h4>{{ cityForecast.city }}, {{ cityForecast.country }}</h4>
             </div>
             <div class="forecast-day">
-              <h4>{{ viewDayInfo }}, 12 <sup>th</sup> Month</h4>
+              <h4>{{ viewDayDate + viewDayDateExtend }}, {{ viewMonthDay }} <sup>th</sup> {{ viewMonth }}</h4>
+            </div>
+          </div>
+          <div class="forecast-time-img" v-if="viewMode === 'standart'">
+            <div class="forecast-time-box">
+                <!-- IF DAY -->
+                <h4 v-if="forecastTimeDay === true && viewTemp === 'celsius' && weatherInfoDay[daySelected].length > 1">
+                  Time: {{ weatherTimeDay[timeSelected] }}, {{ weatherInfoDay[daySelected][timeSelected + 1].weather[1].celsius }}<sup>&#9675;</sup>C
+                </h4>
+                <h4 v-if="forecastTimeDay === true && viewTemp === 'fahren' && weatherInfoDay[daySelected].length > 1">
+                  Time: {{ weatherTimeDay[timeSelected] }}, {{ weatherInfoDay[daySelected][timeSelected + 1].weather[2].fahren }}<sup>&#9675;</sup>C
+                </h4>
+                <img v-if="forecastTimeDay === true && weatherInfoDay[daySelected].length > 1" :src="weatherIconUrl + weatherInfoDay[daySelected][timeSelected + 1].weather[0].icon + '.png'" alt="">
+                <!-- IF NIGHT -->
+                <h4 v-if="forecastTimeDay === false && viewTemp === 'celsius' && weatherInfoNight[daySelected].length > 1">
+                  Time: {{ weatherTimeNight[timeSelected] }}, {{ weatherInfoNight[daySelected][timeSelected + 1].weather[1].celsius }}<sup>&#9675;</sup>C
+                </h4>
+                <h4 v-if="forecastTimeDay === false && viewTemp === 'fahren' && weatherInfoNight[daySelected].length > 1">
+                  Time: {{ weatherTimeNight[timeSelected] }}, {{ weatherInfoNight[daySelected][timeSelected + 1].weather[2].fahren }}<sup>&#9675;</sup>C
+                </h4>
+                <img v-if="forecastTimeDay === false && weatherInfoNight[daySelected].length > 1" :src="weatherIconUrl + weatherInfoNight[daySelected][timeSelected + 1].weather[0].icon + '.png'" alt="">
             </div>
           </div>
         </div>
         <div class="bottom-wrapper">
-          <div v-if="forecastTimeDay === true && viewMode === 'standart'" class="weather-info" v-for="(index, day) in daysInfo" 
-                :data-day="index.day" 
+          <div v-if="forecastTimeDay === true && viewMode === 'standart' && weatherInfoDay[day].length > 1" class="weather-info" v-for="(index, day) in weatherInfoDay" 
+                :data-day="index[0]" 
                 :key="day" 
                 @click="displayDayInfo"
-                :class="{'active-info': viewDayInfo === index.day}"
+                :class="{'active-info': viewDayDate === index[0]}"
                 :id="day"
           >
-            <div class="day-title" :data-day="index.day" :id="day">
-              <h3 :data-day="index.day" :id="day">{{ index.day }}</h3>
+            <div class="day-title" :data-day="index[0]" :id="day">
+              <h3 :data-day="index[0]" :id="day">{{ index[0] }}</h3>
             </div>
-            <div class="day-icon" :data-day="index.day" :id="day">
-              <div :class="index.icon" :data-day="index.day" :id="day"></div>
+            <div class="day-icon" :data-day="index[0]" :id="day">
+              <div :id="day" :data-day="index[0]">
+                <img v-if="daySelected === day" :id="day" :data-day="index[0]" :src="weatherIconUrl + index[timeSelected + 1].weather[0].icon + '.png'" alt="">
+                <img v-if="daySelected !== day" :id="day" :data-day="index[0]" :src="weatherIconUrl + index[1].weather[0].icon + '.png'" alt="">
+              </div>
             </div>
-            <div class="day-temp" :data-day="index.day" :id="day">
-              <h3 :data-day="index.day" :id="day">{{ index.temp }}<sup>&#9675;</sup></h3>
+            <div v-if="daySelected === day" class="day-temp" :data-day="index[0]" :id="day">
+              <h3 v-if="viewTemp === 'celsius'" :data-day="index[0]" :id="day">{{ index[timeSelected + 1].weather[1].celsius }}<sup>&#9675;</sup>C</h3>
+              <h3 v-if="viewTemp === 'fahren'" :data-day="index[0]" :id="day">{{ index[timeSelected + 1].weather[2].fahren }}<sup>&#9675;</sup>F</h3>
+            </div>
+            <div v-if="daySelected !== day" class="day-temp" :data-day="index[0]" :id="day">
+              <h3 v-if="viewTemp === 'celsius'" :data-day="index[0]" :id="day">{{ index[1].weather[1].celsius }}<sup>&#9675;</sup>C</h3>
+              <h3 v-if="viewTemp === 'fahren'" :data-day="index[0]" :id="day">{{ index[1].weather[2].fahren }}<sup>&#9675;</sup>F</h3>
             </div>
           </div>
 
-          <div v-if="forecastTimeDay === false && viewMode === 'standart'" class="weather-info" v-for="(index, day) in nightsInfo" 
-                :data-day="index.day" 
+          <div v-if="forecastTimeDay === false && viewMode === 'standart' && weatherInfoNight[day].length > 1" class="weather-info" v-for="(index, day) in weatherInfoNight" 
+                :data-day="index[0]" 
                 :key="day" 
                 @click="displayDayInfo"
-                :class="{'active-info': viewDayInfo === index.day}"
+                :class="{'active-info': viewDayDate === index[0]}"
                 :id="day"
           >
-            <div class="day-title" :data-day="index.day" :id="day">
-              <h3 :data-day="index.day" :id="day">{{ index.day }}</h3>
+            <div class="day-title" :data-day="index[0]" :id="day">
+              <h3 :data-day="index[0]" :id="day">{{ index[0] }}</h3>
             </div>
-            <div class="day-icon" :data-day="index.day" :id="day">
-              <div :class="index.icon" :data-day="index.day" :id="day"></div>
+            <div class="day-icon" :data-day="index[0]" :id="day">
+              <div :class="index.icon" :data-day="index[0]" :id="day">
+                <img v-if="daySelected === day" :id="day" :data-day="index[0]" :src="weatherIconUrl + index[timeSelected + 1].weather[0].icon + '.png'" alt="">
+                <img v-if="daySelected !== day" :id="day" :data-day="index[0]" :src="weatherIconUrl + index[1].weather[0].icon + '.png'" alt="">
+              </div>
             </div>
-            <div class="day-temp" :data-day="index.day" :id="day">
-              <h3 :data-day="index.day" :id="day">{{ index.temp }}<sup>&#9675;</sup></h3>
+            <div v-if="daySelected === day" class="day-temp" :data-day="index[0]" :id="day">
+              <h3 v-if="viewTemp === 'celsius'" :data-day="index[0]" :id="day">{{ index[timeSelected + 1].weather[1].celsius }}<sup :data-day="index[0]">&#9675;</sup>C</h3>
+              <h3 v-if="viewTemp === 'fahren'" :data-day="index[0]" :id="day">{{ index[timeSelected + 1].weather[2].fahren }}<sup :data-day="index[0]">&#9675;</sup>F</h3>
+            </div>
+            <div v-if="daySelected !== day" class="day-temp" :data-day="index[0]" :id="day">
+              <h3 v-if="viewTemp === 'celsius'" :data-day="index[0]" :id="day">{{ index[1].weather[1].celsius }}<sup :data-day="index[0]">&#9675;</sup>C</h3>
+              <h3 v-if="viewTemp === 'fahren'" :data-day="index[0]" :id="day">{{ index[1].weather[2].fahren }}<sup :data-day="index[0]">&#9675;</sup>F</h3>
             </div>
           </div>
         </div>
@@ -96,20 +151,6 @@ export default {
       searchFor: '',
       viewMode: 'standart',
       viewTemp: 'celsius',
-      daysInfo: [
-        {day: "Monday", temp: "21", icon: "sunny"},
-        {day: "Tuesday", temp: "19", icon: "sunny"},
-        {day: "Wednesday", temp: "25", icon: "sunny-cloud"},
-        {day: "Thursday", temp: "27", icon: "sunny"},
-        {day: "Friday", temp: "23", icon: "sunny-cloud"}
-      ],
-      nightsInfo: [
-        {day: "Monday", temp: "10", icon: "rain"},
-        {day: "Tuesday", temp: "13", icon: "rain"},
-        {day: "Wednesday", temp: "16", icon: "cloud-night"},
-        {day: "Thursday", temp: "15.5", icon: "storm"},
-        {day: "Friday", temp: "11", icon: "snowing"}
-      ],
       weatherInfoDay: [
         [],
         [],
@@ -126,22 +167,33 @@ export default {
         [],
         []
       ],
+      weatherTimeDay: [],
+      weatherTimeNight: [],
+      timeSelected: 0,
+      showTime: false,
       daysDisplay: [],
-      viewDayInfo: "",
+      viewDayDate: "",
+      viewDayDateExtend: "",
+      viewMonthDay: 0,
+      viewMonth: "",
       daySelected: 0,
       weatherLocation: {latitude: null, longitude: null},
       cityForecast: {country: "", city: ""},
+      weatherIconUrl: "http://openweathermap.org/img/w/",
     }
   },
   created: function(){
     this.lookupTime();
-    this.lookupDay();
-    this.getDayDisplay();
     this.getLocation();
   },
   methods: {
     changeForecastTime(){
       this.forecastTimeDay = !this.forecastTimeDay;
+      this.timeSelected = 0;
+      this.lookupDay();
+      this.getMonthDay();
+      this.getMonth();
+      this.saveTimeWeather(this.weatherInfoDay, this.weatherInfoNight);
     },
     changeViewMode(event){
       this.viewMode = event.target.dataset.mode;
@@ -150,10 +202,13 @@ export default {
       this.viewTemp = event.target.dataset.temp;
     },
     displayDayInfo(event){
-      this.viewDayInfo = event.target.dataset.day;
-      this.daySelected = event.target.id;
-      console.log(this.weatherInfoDay);
-      console.log(this.weatherInfoNight);
+      this.timeSelected = 0;
+      this.viewDayDate = event.target.dataset.day;
+      this.daySelected = Number(event.target.id);
+      this.getDayDateExt();
+      this.getMonthDay();
+      this.getMonth();
+      this.saveTimeWeather(this.weatherInfoDay, this.weatherInfoNight);
     },
     lookupTime(){
       let currentTime = new Date();
@@ -161,14 +216,56 @@ export default {
       (currentHour >= 6 && currentHour < 18) ? this.forecastTimeDay = true : this.forecastTimeDay = false;
     },
     lookupDay(){
-      this.viewDayInfo = this.daysInfo[0].day;
+      if(this.forecastTimeDay){
+        if(this.weatherInfoDay[0].length > 1 && this.viewDayDate === ""){
+          this.viewDayDate = this.weatherInfoDay[0][0];
+        } else if(this.weatherInfoDay[this.daySelected].length < 2){
+          this.daySelected += 1;
+          this.viewDayDate = this.weatherInfoDay[1][0];
+        } else {
+          this.viewDayDate = this.weatherInfoDay[this.daySelected][0];
+        }
+      } else {
+        if(this.weatherInfoNight[0].length > 1 && this.viewDayDate === ""){
+          this.viewDayDate = this.weatherInfoNight[0][0];
+        } else if(this.weatherInfoNight[this.daySelected].length < 2){
+          this.daySelected += 1;
+          this.viewDayDate = this.weatherInfoNight[1][0];
+        } else {
+          this.viewDayDate = this.weatherInfoNight[this.daySelected][0];
+        }
+      }
+
+      this.getDayDateExt();
     },
-    getDayDisplay(){
-      for(let i = 0; i < this.daysInfo.length; i++){
-        this.daysDisplay.push(this.daysInfo[i].day.split("").splice(0, 3).join(""));
+    getDayDateExt(){
+      const dateExtensions = ["day", "sday", "nesday", "rsday", "urday"];
+
+      if(this.viewDayDate === 'Mon' || this.viewDayDate === 'Fri' || this.viewDayDate === 'Sun'){
+        this.viewDayDateExtend = dateExtensions[0];
+      } else if(this.viewDayDate === 'Tue'){
+        this.viewDayDateExtend = dateExtensions[1];
+      } else if(this.viewDayDate === 'Wed'){
+        this.viewDayDateExtend = dateExtensions[2];
+      } else if(this.viewDayDate === 'Thu'){
+        this.viewDayDateExtend = dateExtensions[3];
+      } else if(this.viewDayDate === 'Sat'){
+        this.viewDayDateExtend = dateExtensions[4];
       }
     },
-    getLocation() {
+    getMonthDay(){
+      let monthDay = 0;
+      let objDate = "";
+
+      (this.forecastTimeDay) ? objDate = Number(this.weatherInfoDay[this.daySelected][1].dt_txt.split("").splice(8,2).join("")) : objDate = Number(this.weatherInfoNight[this.daySelected][1].dt_txt.split("").splice(8,2).join(""));
+      this.viewMonthDay = objDate;
+    },
+    getMonth(){
+      const yearMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      let objMonth = Number(this.weatherInfoNight[this.daySelected][1].dt_txt.split("").splice(5,2).join(""));
+      this.viewMonth = yearMonths[objMonth - 1];
+    },
+    getLocation(){
       if(navigator.geolocation){
         navigator.geolocation.getCurrentPosition(position => {
           this.weatherLocation.latitude = position.coords.latitude;
@@ -179,18 +276,30 @@ export default {
         console.log("Geolocation is not supported");
       }
     },
-    convertToCelsius(kelvin){
+    convertToCelsius(obj){
       let celsius = 0;
-      celsius = kelvin - 273.15;
-      console.log(Math.ceil(celsius));
+
+      for(let index in obj.list){
+        let kelvinTemp = obj.list[index].main.temp;
+        let addTo = obj.list[index].weather;
+
+        celsius = Math.round(kelvinTemp - 273.15);
+        addTo.push({"celsius":celsius})
+      }
     },
-    convertToFahren(kelvin){
+    convertToFahren(obj){
       let fahren = 0;
-      fahren = kelvin * 9/5 - 459.67;
-      console.log(Math.ceil(fahren));
+
+      for(let index in obj.list){
+        let kelvinTemp = obj.list[index].main.temp;
+        let addTo = obj.list[index].weather;
+
+        fahren = Math.round(kelvinTemp * 9/5 - 459.67);
+        addTo.push({"fahren":fahren})
+      }
     },
     removeAndSaveWeekDays(weekDaysArray){
-      const weekDays = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      const weekDays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
       let currentDate = new Date();
       let currentWeekDay = currentDate.getDay();
       let increase = -1;
@@ -203,6 +312,27 @@ export default {
           increase += 1;
           this.weatherInfoDay[i].splice(0, this.weatherInfoDay.length, weekDays[increase]);
           this.weatherInfoNight[i].splice(0, this.weatherInfoNight.length, weekDays[increase]); 
+        }
+      }
+    },
+    changeTimeSelected(event){
+      this.timeSelected = Number(event.target.id);
+    },
+    saveTimeWeather(dayArray, nightArray){
+      this.weatherTimeDay.splice(0, this.weatherTimeDay.length);
+      this.weatherTimeNight.splice(0, this.weatherTimeNight.length);
+        
+      for(let i in dayArray){
+        if(dayArray[this.daySelected][i] !== undefined && dayArray[this.daySelected][i].dt_txt !== undefined){
+          let dayTime = [...dayArray[this.daySelected][i].dt_txt].splice(11, 8).join("");
+          this.weatherTimeDay.push(dayTime);
+        }
+      }
+
+      for(let i in nightArray){
+        if(nightArray[this.daySelected][i] !== undefined && nightArray[this.daySelected][i].dt_txt !== undefined){
+          let nightTime = [...nightArray[this.daySelected][i].dt_txt].splice(11, 8).join("");
+          this.weatherTimeNight.push(nightTime);
         }
       }
     },
@@ -284,6 +414,8 @@ export default {
         let objListDate = [...obj.list[i].dt_txt].splice(0,10).join("");
         let objListTime = [...obj.list[i].dt_txt].splice(11,8).join("");
 
+        obj.list[i].weather.push({"time": objListTime});
+
         if(objListDate === todayDateCheck){ // current Day
           if(objListTime >= "18:00:00" || objListTime < "06:00:00"){
             this.weatherInfoNight[0].push(obj.list[i]);
@@ -322,6 +454,12 @@ export default {
           }
         }
       }
+
+      this.lookupDay();
+      this.lookupTime();
+      this.getMonthDay();
+      this.getMonth();
+      this.saveTimeWeather(this.weatherInfoDay, this.weatherInfoNight);
     },
     loadJson(){
       let getApi = "";
@@ -337,7 +475,8 @@ export default {
             .then(() => {
               this.cityForecast.country = obj.city.country;
               this.cityForecast.city = obj.city.name;
-              console.log(obj)
+              this.convertToCelsius(obj);
+              this.convertToFahren(obj);
               this.saveWeatherInfo(obj);
             })
     }
@@ -402,6 +541,28 @@ export default {
   flex-direction: column;
 }
 
+.forecast-time-img {
+  width: 100%;
+  height: auto;
+  display: flex;
+  justify-content: center;
+}
+  .forecast-time-box {
+    width: 100%;
+    height: 70px;
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+  }
+    .forecast-time-box h4 {
+      font-size: 1em;
+      color: #f2f2f2;
+      margin: 0;
+    }
+    .forecast-time-box img {
+      width: 70px;
+    }
 /* forecast hour styling */
 .forecast-hour {
   grid-column: 1;
@@ -418,6 +579,19 @@ export default {
   background-size: cover;
   cursor: pointer;
 }
+  .hour-select-img > ul {
+    display: none;
+    list-style: none;
+    padding: 0;
+  }
+    .hour-select-img > ul > li {
+      color: #f2f2f2;
+      padding: 5px 0 0 0;
+    }
+    .hour-select-img > ul > li:first-child {
+      color: #f2f2f2;
+      margin: 35px 0 0 0;
+    }
 
 /* search, mode, temp BOX */
 .search-mode-box {
@@ -564,12 +738,6 @@ export default {
   margin: 0;
 }
 
-/* .forecast-icon {
-  margin-right: 25px;
-  width: 80px;
-  height: 80px;
-} */
-
 /* background view (day and night) images */
 .view-day {
   background: url(./assets/view-background/background-day.png) no-repeat center;
@@ -610,42 +778,26 @@ export default {
 .day-icon > div {
   width: 60px;
   height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center; 
 }
+  .day-icon > div > img {
+    width: 100%;
+    height: 100%;
+  }
 
 h3 {
   margin: 0;
   padding: 0;
 }
 
+.hour-select-img > .active-time {
+  display: block;
+}
 .active-info {
   background-color: #fff;
   box-shadow: 0 0 15px rgba(255, 50, 0, 0.3);
-}
-/* Weather icons DAY*/
-.sunny {
-  background: url(./assets/weather-icons-day/sunny.png) no-repeat center;
-  background-size: cover;
-}
-.sunny-cloud {
-  background: url(./assets/weather-icons-day/sunnycloud.png) no-repeat center;
-  background-size: cover;
-}
-/* Weather icons NIGHT */
-.rain {
-  background: url(./assets/weather-icons-night/rain.png) no-repeat center;
-  background-size: cover;
-}
-.cloud-night {
-  background: url(./assets/weather-icons-night/cloudnight.png) no-repeat center;
-  background-size: cover;
-}
-.storm {
-  background: url(./assets/weather-icons-night/storm.png) no-repeat center;
-  background-size: cover;
-}
-.snowing {
-  background: url(./assets/weather-icons-night/snowing.png) no-repeat center;
-  background-size: cover;
 }
 
 /* Query media */
