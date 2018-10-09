@@ -41,18 +41,20 @@
               <div class="temp-box">
                 <input type="button" value="F" class="temp-f" data-temp="fahren"
                         :class="{'active-temp': viewTemp === 'fahren', 'inactive-temp': viewTemp === 'celsius'}"
-                        @click="changeViewTemp">
+                        @click="changeViewTemp"
+                >
                 <input type="button" value="C" class="temp-c" data-temp="celsius"
                         :class="{'active-temp': viewTemp === 'celsius', 'inactive-temp': viewTemp === 'fahren'}"
-                        @click="changeViewTemp">
+                        @click="changeViewTemp"
+                >
               </div>
             </div>
             <div class="forecast-time">
               <div class="forecast-box" 
                     @click="changeForecastTime" 
                     :class="{'day-time': forecastTimeDay === false, 'night-time': forecastTimeDay === true}"
-                    title="Forecast Time">
-              </div>
+                    title="Forecast Time"
+              ></div>
             </div>
           </div>
           <div class="forecast-info">
@@ -90,7 +92,8 @@
                 :key="day" 
                 @click="displayDayInfo"
                 :class="{'active-info': viewDayDate === index[0]}"
-                :id="day">
+                :id="day"
+          >
             <div class="day-title" :data-day="index[0]" :id="day">
               <h3 :data-day="index[0]" :id="day">{{ index[0] }}</h3>
             </div>
@@ -115,7 +118,8 @@
                 :key="day" 
                 @click="displayDayInfo"
                 :class="{'active-info': viewDayDate === index[0]}"
-                :id="day">
+                :id="day"
+          >
             <div class="day-title" :data-day="index[0]" :id="day">
               <h3 :data-day="index[0]" :id="day">{{ index[0] }}</h3>
             </div>
@@ -205,6 +209,8 @@ export default {
       this.getMonthDay();
       this.getMonth();
       this.saveTimeWeather(this.weatherInfoDay, this.weatherInfoNight);
+
+      console.log({day: this.weatherInfoDay, night: this.weatherInfoNight})
     },
     lookupTime(){
       let currentTime = new Date();
@@ -280,7 +286,7 @@ export default {
         let addTo = obj.list[index].weather;
 
         celsius = Math.round(kelvinTemp - 273.15);
-        addTo.push({"celsius":celsius})
+        addTo[1] = {...{"celsius":celsius}}
       }
     },
     convertToFahren(obj){
@@ -291,7 +297,7 @@ export default {
         let addTo = obj.list[index].weather;
 
         fahren = Math.round(kelvinTemp * 9/5 - 459.67);
-        addTo.push({"fahren":fahren})
+        addTo[2] = {...{"fahren":fahren}}
       }
     },
     removeAndSaveWeekDays(weekDaysArray){
@@ -410,7 +416,7 @@ export default {
         let objListDate = [...obj.list[i].dt_txt].splice(0,10).join("");
         let objListTime = [...obj.list[i].dt_txt].splice(11,8).join("");
 
-        obj.list[i].weather.push({"time": objListTime});
+        obj.list[i].weather[3] = {...{"time":objListTime}};
 
         if(objListDate === todayDateCheck){ // current Day
           if(objListTime >= "18:00:00" || objListTime < "06:00:00"){
